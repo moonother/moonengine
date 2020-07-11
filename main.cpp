@@ -52,7 +52,8 @@ int main()
     unsigned int VAO;
     unsigned int VBO;
     unsigned int EBO;
-    unsigned int texture;
+    unsigned int texture1;
+    unsigned int texture2;
     int vertexShader;
     int fragmentShader;
     int shaderProgram;
@@ -190,31 +191,58 @@ int main()
     //glBindVertexArray(0);
 
     //someOpenGLFunctionThatDrawsOurTriangle();
-
-    //纹理
+    //纹理1
     //----------------------------------------------------------
     //borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
     // 为当前绑定的纹理对象设置环绕、过滤方式
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
-    unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
-    if (data)
+    stbi_set_flip_vertically_on_load(true);//翻转图像Y轴
+    unsigned char* data1 = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+    if (data1)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data1);//注意GL_RGB这个参数！必须根据具体图像是否有alpha通道来选择参数！
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     {
-        std::cout << "Failed to load texture" << std::endl;
+        std::cout << "Failed to load texture1" << std::endl;
     }
-    stbi_image_free(data);
-    //----------------------------------------------------------
+    stbi_image_free(data1);
 
+
+    //纹理2
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // 为当前绑定的纹理对象设置环绕、过滤方式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // 加载并生成纹理
+    
+    unsigned char* data2 = stbi_load("cute.jpg", &width, &height, &nrChannels, 4);//注意，此函数的第四个参数为返回通道数,可能需要与图片通道数保持一致，若为0可能会报错
+    if (data2)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture2" << std::endl;
+    }
+
+    stbi_image_free(data2);
+    //----------------------------------------------------------
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    ourShader.use(); // 别忘记在激活着色器前先设置uniform！
+    glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0); // 手动设置
+    ourShader.setInt("texture2", 1); // 或者使用着色器类设置
 
     while (!glfwWindowShouldClose(window))
     {
@@ -229,10 +257,14 @@ int main()
         greenValue = (sin(timeValue) / 2.0f) + 0.5f;//使用sin函数改变颜色
         vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");//查询uniform ourColor的位置值
 #endif   
-        //glUseProgram(shaderProgram);//激活着色器程序对象
+       //纹理1
+        glActiveTexture(GL_TEXTURE0); // 在绑定纹理之前先激活纹理单元
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        //纹理2
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+
         ourShader.use();
-        //glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);//更新一个uniform之前你必须先使用程序（调用glUseProgram)
-        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
         //ourShader.setFloat("someUniform", 1.0f);
         //glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -245,6 +277,7 @@ int main()
     }
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
     glfwTerminate();
     return 0;
 }
