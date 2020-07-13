@@ -63,6 +63,7 @@ int main()
     int vertexColorLocation;
     float timeValue;
     float greenValue;
+    float xyset;
     float borderColor;
    // unsigned int VBO, VAO;
     /*
@@ -92,12 +93,7 @@ int main()
             -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
             -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
     };
-    //纹理坐标
-    float texCoords[] = {
-    0.0f, 0.0f, // 左下角
-    1.0f, 0.0f, // 右下角
-    0.5f, 1.0f // 上中
-    };
+
     //--------------creatwindow------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -226,7 +222,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
     
-    unsigned char* data2 = stbi_load("cute.jpg", &width, &height, &nrChannels, 4);//注意，此函数的第四个参数为返回通道数,可能需要与图片通道数保持一致，若为0可能会报错
+    unsigned char* data2 = stbi_load("awesomeface.png", &width, &height, &nrChannels, 4);//注意，此函数的第四个参数为返回通道数,可能需要与图片通道数保持一致，若为0可能会报错
     if (data2)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
@@ -257,6 +253,11 @@ int main()
         greenValue = (sin(timeValue) / 2.0f) + 0.5f;//使用sin函数改变颜色
         vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");//查询uniform ourColor的位置值
 #endif   
+
+        timeValue = glfwGetTime();
+        xyset = sin(timeValue*5)*0.5;
+
+
        //纹理1
         glActiveTexture(GL_TEXTURE0); // 在绑定纹理之前先激活纹理单元
         glBindTexture(GL_TEXTURE_2D, texture1);
@@ -264,7 +265,11 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
+        
         ourShader.use();
+        //ourShader.setFloat("xOffset1", xset);
+        ourShader.setFloat("xyOffset", xyset);
+        ourShader.setFloat("cvalue", xyset);
         glBindVertexArray(VAO);
         //ourShader.setFloat("someUniform", 1.0f);
         //glDrawArrays(GL_TRIANGLES, 0, 3);
