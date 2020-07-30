@@ -9,13 +9,24 @@
 #include <glm-master/glm/gtc/type_ptr.hpp>
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float deltaTime = 0.0f;	// time between current frame and last frame
-float lastFrame = 0.0f;
+float lastFrame = 0.0f;//最后一帧的时间
+
+bool firstMouse = true;
+
+float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+float pitch = 0.0f;
+float lastX = 800.0f / 2.0;
+float lastY = 600.0 / 2.0;
+float fov = 45.0f;
+
 #if 0
 //顶点着色器源代码
 const char*vertexShaderSource = "#version 330 core\n"  
@@ -75,6 +86,7 @@ int main()
     float greenValue;
     float xyset;
     float borderColor;
+
    // unsigned int VBO, VAO;
 #if 0 
     float vertices[] = {  //顶点坐标
@@ -172,7 +184,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     //glViewport(0, 0, 800, 600);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "MOON Engine", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -292,7 +304,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
     
-    unsigned char* data2 = stbi_load("awesomeface.png", &width, &height, &nrChannels, 4);//注意，此函数的第四个参数为返回通道数,可能需要与图片通道数保持一致，若为0可能会报错
+    unsigned char* data2 = stbi_load("cute.jpg", &width, &height, &nrChannels, 4);//注意，此函数的第四个参数为返回通道数,可能需要与图片通道数保持一致，若为0可能会报错
     if (data2)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
@@ -312,16 +324,20 @@ int main()
     glEnable(GL_DEPTH_TEST);//开启深度测试
     while (!glfwWindowShouldClose(window))
     {
+        //渲染
+         //清除深度缓冲和颜色缓冲
+        glClearColor(0.3f, 0.4f, 0.3f, 0.5f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//不能放在glDrawArrays的后面，否则会提前清空着色器的缓冲
+
+        glfwSetScrollCallback(window, scroll_callback);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);//使鼠标光标消失且保持在目前窗口
+        glfwSetCursorPosCallback(window, mouse_callback);
 
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         processInput(window);
 
-        //渲染
-        //清除深度缓冲和颜色缓冲
-        glClearColor(0.3f, 0.4f, 0.3f, 0.5f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//不能放在glDrawArrays的后面，否则会提前清空着色器的缓冲
 #if 0
         timeValue = glfwGetTime();//获取运行的时间
         greenValue = (sin(timeValue) / 2.0f) + 0.5f;//使用sin函数改变颜色
@@ -362,11 +378,11 @@ int main()
 
 #if 1
         //变换到世界坐标系
-        /*
+        
         glm::mat4 model = glm::mat4(1.0f);;
         model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
         int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-        */
+        
         //观察矩阵
         glm::mat4 view = glm::mat4(1.0f);
         //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
@@ -374,7 +390,7 @@ int main()
         int viewLoc = glGetUniformLocation(ourShader.ID, "view");
         //投影矩阵
         glm::mat4 projection = glm::mat4(1.0f);;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);
         int projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
         //glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -431,4 +447,50 @@ void processInput(GLFWwindow* window)
         cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     if ((glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)|| (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS))
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+}
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // 注意这里是相反的，因为y坐标是从底部往顶部依次增大的
+    lastX = xpos;
+    lastY = ypos;
+
+    float sensitivity = 0.05f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+
+
+    yaw += xoffset;
+    pitch += yoffset;
+
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
+
+
+}
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    if (fov >= 1.0f && fov <= 45.0f)
+        fov -= yoffset;
+    if (fov <= 1.0f)
+        fov = 1.0f;
+    if (fov >= 45.0f)
+        fov = 45.0f;
 }
