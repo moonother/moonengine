@@ -30,5 +30,7 @@
   <ItemGroup>
     <Text Include="3.3.shader.vs" />
     <Text Include="3.3.shader.fs" />
+    <Text Include="lighter.vs" />
+    <Text Include="lighter.fs" />
   </ItemGroup>
 </Project>

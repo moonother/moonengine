@@ -15,6 +15,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;//最后一帧的时间
@@ -121,6 +122,7 @@ int main()
             -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
     };
 #endif
+    /*
     float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -164,6 +166,50 @@ int main()
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
+    */
+    float vertices[] = {
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    -0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    };
     glm::vec3 cubePositions[] = {
       glm::vec3(0.0f,  0.0f,  0.0f),
       glm::vec3(2.0f,  5.0f, -15.0f),
@@ -205,12 +251,13 @@ int main()
     //glGenBuffers(1, &EBO);
     glGenBuffers(1, &VBO);  //创建一个VBO对象
 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO); //把VBO对象绑定到GL_ARRAY_BUFFER上
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  //把定义的顶点数据复制到缓冲的内存中
 
     glBindVertexArray(VAO); //把我们的顶点数组复制到一个顶点缓冲中，供OpenGL使用
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO); //把VBO对象绑定到GL_ARRAY_BUFFER上
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  //把定义的顶点数据复制到缓冲的内存中
-    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 #if 0
@@ -245,6 +292,22 @@ int main()
     glDeleteShader(fragmentShader); //删除着色器对象
 
 #endif
+
+#if 1 //光源属性
+
+    Shader lightingShader("lighter.vs", "lighter.fs");
+
+    unsigned int lightVAO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
+    // 只需要绑定VBO不用再次设置VBO的数据，因为箱子的VBO数据中已经包含了正确的立方体顶点数据
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // 设置灯立方体的顶点属性（对我们的灯来说仅仅只有位置数据）
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+#endif
+#if 0
+
      //设置顶点属性指针
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     /*
@@ -262,13 +325,14 @@ int main()
 
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-
+#endif
     //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     //glEnableVertexAttribArray(2);
 
     //glBindVertexArray(0);
 
     //someOpenGLFunctionThatDrawsOurTriangle();
+#if 0
     //纹理1
     //----------------------------------------------------------
     //borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
@@ -314,13 +378,15 @@ int main()
     {
         std::cout << "Failed to load texture2" << std::endl;
     }
-
     stbi_image_free(data2);
+#endif
+
+    
     //----------------------------------------------------------
     //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     ourShader.use(); // 别忘记在激活着色器前先设置uniform！
-    glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0); // 手动设置
-    ourShader.setInt("texture2", 1); // 或者使用着色器类设置
+   // glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0); // 手动设置
+   // ourShader.setInt("texture2", 1); // 或者使用着色器类设置
     glEnable(GL_DEPTH_TEST);//开启深度测试
     while (!glfwWindowShouldClose(window))
     {
@@ -338,12 +404,17 @@ int main()
         lastFrame = currentFrame;
         processInput(window);
 
+        // 在此之前不要忘记首先 use 对应的着色器程序（来设定uniform）
+        ourShader.use();
+        ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
 #if 0
         timeValue = glfwGetTime();//获取运行的时间
         greenValue = (sin(timeValue) / 2.0f) + 0.5f;//使用sin函数改变颜色
         vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");//查询uniform ourColor的位置值
 #endif   
-
+#if 0
         timeValue = glfwGetTime();
         xyset = sin(timeValue);
 
@@ -353,7 +424,8 @@ int main()
         //纹理2
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-#if 1
+#endif
+#if 0
         unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
         glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 
@@ -366,7 +438,7 @@ int main()
 #endif
 
 
-#if 1 
+#if 0 
         //缩放
         //transform = glm::mat4(1.0f); // reset it to identity matrix
         //transform = glm::translate(transform, glm::vec3(-0.5f, 0.5f, 0.0f));
@@ -380,26 +452,25 @@ int main()
         //变换到世界坐标系
         
         glm::mat4 model = glm::mat4(1.0f);;
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-        int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));//改变矩阵控制cube旋转
         
         //观察矩阵
         glm::mat4 view = glm::mat4(1.0f);
         //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        int viewLoc = glGetUniformLocation(ourShader.ID, "view");
         //投影矩阵
         glm::mat4 projection = glm::mat4(1.0f);;
         projection = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);
-        int projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
-        //glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-#endif
-        ourShader.setFloat("xyOffset", xyset);
+
+       // ourShader.setFloat("xyOffset", xyset);
        // ourShader.setFloat("cvalue", xyset);
+        ourShader.use();
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
+        ourShader.setMat4("model", model);
+
         glBindVertexArray(VAO);
-        
+        /*
         for (unsigned int i = 0; i < 10; i++)
         {
             glm::mat4 model = glm::mat4(1.0f);;
@@ -411,8 +482,21 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
         }
-        
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
+        */
+
+#endif
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        lightingShader.use();
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setMat4("view", view);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+        lightingShader.setMat4("model", model);
+
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         //ourShader.setFloat("someUniform", 1.0f);
        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
