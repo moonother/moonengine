@@ -24,10 +24,10 @@ void main()
   //gl_Position = projection * view * model * transform * vec4(aPos.x + xyOffset, aPos.y+ xyOffset, aPos.z+ xyOffset, 1.0); // add the xOffset to the x position of the vertex position
   // ourColor = aColor;
   //TexCoord = aTexCoord;
-
+    //Normal = aNormal;
   FragPos = vec3(model * vec4(aPos, 1.0));
-  //Normal = aNormal;
+
   Normal = mat3(transpose(inverse(model))) * aNormal;
-  gl_Position = projection * view * model *  vec4(aPos, 1.0); // add the xOffset to the x position of the vertex position
+  gl_Position = projection * view *  vec4(FragPos, 1.0); // add the xOffset to the x position of the vertex position
 
 }
