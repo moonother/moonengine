@@ -421,6 +421,11 @@ int main()
         ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         ourShader.setVec3("lightPos", lightPos);
         ourShader.setVec3("viewPos", camera.Position);//传递摄像机的空间位置,不要再犯把值传递给lightercube这种傻逼问题
+        
+        ourShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+        ourShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        ourShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        ourShader.setFloat("material.shininess", 32.0f);
 
 #if 0
         timeValue = glfwGetTime();//获取运行的时间
